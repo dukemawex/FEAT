@@ -1,0 +1,14 @@
+# Multi-Agent Automated Content Pipeline
+# Python 3.11+
+
+# HTTP / web scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+feedparser>=6.0.11
+lxml>=5.2.0
+
+# OpenAI-compatible client (used for both Groq Whisper and direct OpenAI calls)
+openai>=1.30.0
+
+# FFmpeg Python bindings
+ffmpeg-python>=0.2.0

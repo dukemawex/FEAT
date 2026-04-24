@@ -1,0 +1,3 @@
+# output/.gitkeep
+# This directory is intentionally empty in version control.
+# All pipeline artefacts (audio, transcript, social copy, video) are written here at runtime.

@@ -1,0 +1,65 @@
+name: FEAT Content Pipeline
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:  # allow manual trigger
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      # ------------------------------------------------------------------ #
+      # 1. Checkout                                                          #
+      # ------------------------------------------------------------------ #
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------ #
+      # 2. Set up Python                                                     #
+      # ------------------------------------------------------------------ #
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # ------------------------------------------------------------------ #
+      # 3. Install FFmpeg                                                    #
+      # ------------------------------------------------------------------ #
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg
+
+      # ------------------------------------------------------------------ #
+      # 4. Install Python dependencies                                       #
+      # ------------------------------------------------------------------ #
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # ------------------------------------------------------------------ #
+      # 5. Run the pipeline                                                  #
+      # ------------------------------------------------------------------ #
+      - name: Run content pipeline
+        env:
+          MIXLR_TARGET_URL: ${{ secrets.MIXLR_TARGET_URL }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # Optional overrides
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL }}
+        run: python main.py
+
+      # ------------------------------------------------------------------ #
+      # 6. Upload output artefacts for manual download                      #
+      # ------------------------------------------------------------------ #
+      - name: Upload pipeline output
+        if: always()   # upload even on partial success so logs/partial files are accessible
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-output-${{ github.run_id }}
+          path: output/
+          retention-days: 7

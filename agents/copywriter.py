@@ -62,17 +62,21 @@ class CopywriterError(RuntimeError):
     """Raised when transcription or copy generation fails."""
 
 
-def _transcribe(audio_path: str, api_key: str) -> str:
+def _transcribe(audio_path: str, cfg: Config) -> str:
     """
-    Use OpenAI Whisper (whisper-1) to transcribe the audio file.
+    Use the Groq-hosted Whisper (whisper-large-v3) to transcribe the audio file.
+    The standard openai Python client is pointed at Groq's OpenAI-compatible endpoint.
     Returns the full transcript text.
     """
-    client = openai.OpenAI(api_key=api_key)
+    client = openai.OpenAI(
+        api_key=cfg.groq_api_key,
+        base_url=cfg.groq_api_base,
+    )
 
-    logger.info("Transcribing audio: %s", audio_path)
+    logger.info("Transcribing audio via Groq (%s): %s", cfg.groq_whisper_model, audio_path)
     with open(audio_path, "rb") as audio_file:
         response = client.audio.transcriptions.create(
-            model="whisper-1",
+            model=cfg.groq_whisper_model,
             file=audio_file,
             response_format="text",
         )
@@ -161,7 +165,7 @@ def run(cfg: Config, audio_path: str) -> str:
     logger.info("Copywriter agent started.")
 
     # Step 1 – Transcribe
-    transcript = _transcribe(audio_path, cfg.openai_api_key)
+    transcript = _transcribe(audio_path, cfg)
 
     # Step 2 – Generate social copy
     social_copy = _generate_copy(transcript, cfg)
